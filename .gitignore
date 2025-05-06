@@ -296,6 +296,8 @@ dist
 # Serverless directories
 .serverless/
 
+package/
+
 # FuseBox cache
 .fusebox/
 

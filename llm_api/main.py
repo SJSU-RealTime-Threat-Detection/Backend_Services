@@ -137,6 +137,11 @@ Here are the anomalous logs:
 {json.dumps(anomalous_logs, indent=2)}
 """
 
+@app.route('/hello', methods=['GET'])
+def hello_world():
+    """Simple hello world endpoint."""
+    return jsonify({"message": "Hello, World!"}), 200
+
 @app.route('/analyze', methods=['POST'])
 def analyze_logs():
     """
@@ -188,9 +193,20 @@ def analyze_logs():
         # Make API Call to add data to and Send Notification
         #TODO: Add the logic to send the report to a notification service or database
         
+        r = save_and_notify({
+            "llm_response": report,
+            "logs": anomalous_logs,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "created_at": datetime.utcnow().isoformat() + "Z",
+            "model": "gpt-4.1-mini",
+            "response_time_seconds": round(elapsed_time, 2),
+            "response_time_ms": round(elapsed_time * 1000, 2)
+        })
+        print(r)
 
         return jsonify({
-            "report": report,
+            "save_and_notify": r,
+            "llm_response": report,
             "logs": anomalous_logs,
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "created_at": datetime.utcnow().isoformat() + "Z",
@@ -226,8 +242,18 @@ def analyze_logs_gemini():
 
         report = response.text
 
+        r = save_and_notify({
+            "llm_response": report,
+            "logs_analyzed": len(anomalous_logs),
+            "logs": anomalous_logs,
+            "model_used": "gemini-2.0-flash",
+            "response_time_seconds": round(elapsed_time, 2),
+            "response_time_ms": round(elapsed_time * 1000, 2)
+        })
+        print(r)
         return jsonify({
-            "report": report,
+            "save_and_notify": r,
+            "llm_response": report,
             "logs_analyzed": len(anomalous_logs),
             "logs": anomalous_logs,
             "model_used": "gemini-2.0-flash",
@@ -237,8 +263,6 @@ def analyze_logs_gemini():
 
     except Exception as e:
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
-
-
 
 def save_and_notify(data):
     try:
